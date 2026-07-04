@@ -74,3 +74,5 @@ coverage/
 # Local caches
 # ==========================================
 .cache/
+
+fpcalc/fpcalc
