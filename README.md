@@ -27,13 +27,16 @@ Chromaprint (fpcalc)
      ▼
 AcoustID
      │
-     ├─────────────── Score ≥ 0.90 ───────────────┐
+     │                                            
+     ▼                                            
+MusicBrainz     
+     ├─────────────── Score ≥ 0.90 ───────────────┐ 
      │                                            │
      ▼                                            ▼
-MusicBrainz                                 Return Result
+Shazam API                                 Return Result (MusicBrainz) 
      │
      ▼
-Return Result
+Return Results (Shazam API + MusicBrainz)
 
 If AcoustID confidence is low or no match:
                │
@@ -41,7 +44,7 @@ If AcoustID confidence is low or no match:
           Shazam API
                │
                ▼
-         Return Result
+         Return Result (Shazam API (if any) + MusicBrainz (if any))
 ```
 
 The backend is designed to support multiple candidate results when confidence is uncertain.
