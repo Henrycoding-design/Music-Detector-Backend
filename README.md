@@ -222,10 +222,6 @@ The backend follows a confidence-based decision flow:
 * [x] Unified recognition pipeline
 * [ ] yt-dlp integration
 * [ ] FFmpeg preprocessing
-* [ ] Docker support
-* [ ] Supabase search history
-* [ ] Authentication
-* [ ] Flutter client
 
 ---
 
