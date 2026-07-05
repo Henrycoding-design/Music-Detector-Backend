@@ -1,19 +1,26 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import router from "./routes/regconize.js";
+import recognizeRouter from "./routes/recognize.js";
+import urlRecognizeRouter from "./routes/urlRecognize.js";
+import { ExecutableManager } from "./services/executableManager.js";
 
 dotenv.config();
 
 const app = express();
 
+ExecutableManager.initialize();
+
 app.use(cors());
+
+app.use(express.json());
 
 app.get("/", (_, res) => {
     res.send("Music Finder Backend");
 });
 
-app.use("/recognize", router);
+app.use("/recognize", recognizeRouter);
+app.use("/urlRecognize", urlRecognizeRouter);
 
 const PORT = process.env.PORT || 3000;
 

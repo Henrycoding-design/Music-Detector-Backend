@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios"
 import multer from "multer";
 import { recognize } from "../services/recognition.js";
+import { normalizeAudio } from "../services/normalizer.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -42,9 +43,12 @@ router.post("/", upload.single("file"), async (req, res) => {
         });
     }
 
+    let normalized = "";
+
     try {
 
-        const result = await recognize(req.file.path);
+        normalized = await normalizeAudio(req.file.path);
+        const result = await recognize(normalized);
 
         return res.json({
             success: true,
@@ -86,6 +90,10 @@ router.post("/", upload.single("file"), async (req, res) => {
     } finally {
 
         await fs.unlink(req.file.path).catch(() => {});
+
+        if (normalized) {
+            await fs.unlink(normalized).catch(() => {});
+        }
 
     }
 

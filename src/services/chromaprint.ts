@@ -2,27 +2,9 @@
 
 import { execFile } from "child_process";
 import { promisify } from "util";
-import path from "path";
-import os from "os";
-import fs from "fs/promises";
-
-export function getFpcalcPath() {
-    return path.join(
-        process.cwd(),
-        "fpcalc",
-        os.platform() === "win32"
-            ? "fpcalc.exe"
-            : "fpcalc"
-    );
-}
+import { ExecutableManager } from "./executableManager.js";
 
 const execFileAsync = promisify(execFile);
-
-async function ensureExecutable() {
-    if (os.platform() !== "win32") {
-        await fs.chmod(getFpcalcPath(), 0o755);
-    }
-}
 
 export interface ChromaprintResult {
     duration: number;
@@ -33,7 +15,7 @@ export async function fingerprintAudio(
     filePath: string
 ): Promise<ChromaprintResult> {
 
-    const fpcalcPath = getFpcalcPath();
+    const fpcalcPath = ExecutableManager.fpcalc;
 
     if (process.env.NODE_ENV !== "production") {
         console.log("cwd:", process.cwd());
@@ -41,8 +23,6 @@ export async function fingerprintAudio(
     }
 
     try {
-
-        await ensureExecutable();
 
         const { stdout } = await execFileAsync(fpcalcPath, [filePath]);
 

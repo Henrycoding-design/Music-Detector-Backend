@@ -3,6 +3,8 @@
 import axios from "axios";
 
 export interface MusicBrainzResult {
+    title: string | null;
+    artist: string | null;
     album: string | null;
     releaseDate: string | null;
     isrc: string | null;
@@ -20,7 +22,7 @@ export async function lookupRecording(
             {
                 params: {
                     fmt: "json",
-                    inc: "releases+isrcs+genres",
+                    inc: "artists+releases+isrcs+genres",
                 },
                 headers: {
                     "User-Agent":
@@ -31,6 +33,10 @@ export async function lookupRecording(
         );
 
         return {
+            title:
+                data.title ?? null,
+            artist:
+                data['artist-credit']?.[0]?.name ?? null,
             album:
                 data.releases?.[0]?.title ?? null,
 

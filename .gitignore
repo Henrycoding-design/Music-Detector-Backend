@@ -74,3 +74,14 @@ coverage/
 # Local caches
 # ==========================================
 .cache/
+
+# ==========================================
+# Prod caches
+# ==========================================
+downloads/
+normalized/
+
+
+# binaries (IMPORTANT)
+bin/
+*.exe

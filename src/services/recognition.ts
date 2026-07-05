@@ -15,6 +15,7 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
 
         console.log(`[Recognition] Querying AcoustID with duration: ${duration}`);
         const acoustId = await identifyByAcoustID(fp.fingerprint, fp.duration);
+        // console.dir(acoustId, { depth: null });
 
         if (acoustId && acoustId.recording) {
             console.log(`[Recognition] AcoustID match found (score: ${acoustId.score}). Querying MusicBrainz...`);
@@ -29,8 +30,8 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
                 confidence: acoustId.score,
                 recording: {
                     id: acoustId.recording.id,
-                    title: acoustId.recording.title,
-                    artist: acoustId.recording.artist,
+                    title: acoustId.recording.title ?? musicbrainz?.title ?? null,
+                    artist: acoustId.recording.artist ?? musicbrainz?.artist ?? null,
                     duration: acoustId.recording.duration ?? fp.duration,
                 },
                 album: musicbrainz?.album ?? null,
@@ -47,9 +48,15 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
 
     console.log(acoustIdResult);
 
+    const hasCompleteMetadata = !!(
+        acoustIdResult?.recording.title &&
+        acoustIdResult?.recording.artist &&
+        acoustIdResult?.album
+    );
+
     // Check if we have a high-confidence AcoustID result
-    if (acoustIdResult && acoustIdResult.confidence >= 0.90) {
-        console.log(`[Recognition] AcoustID match meets confidence threshold (>= 0.90). Returning AcoustID result.`);
+    if (acoustIdResult && acoustIdResult.confidence >= 0.95 && hasCompleteMetadata) {
+        console.log(`[Recognition] AcoustID match meets confidence threshold (>= 0.95) and have all vital info. Returning AcoustID result.`);
         return [acoustIdResult];
     }
 
@@ -78,7 +85,7 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
     }
 
     console.log(shazamResultUnified);
-    
+
     const results: MusicResult[] = [];
     if (acoustIdResult) {
         results.push(acoustIdResult);

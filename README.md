@@ -9,7 +9,7 @@ Instead of relying on a single provider, this project combines multiple recognit
 * 🎼 Audio fingerprinting using **Chromaprint (fpcalc)**
 * 🔍 Song identification through **AcoustID**
 * 📚 Metadata enrichment using **MusicBrainz**
-* 🎧 Automatic fallback to **Shazam** when open databases cannot confidently identify a track
+* 🎧 Automatic fallback to **Shazam RapidAPI** when open databases cannot confidently identify a track
 * 📦 Unified response format regardless of the recognition source
 * 🚀 REST API built with Express
 * 🔒 Fully typed with TypeScript
@@ -19,6 +19,15 @@ Instead of relying on a single provider, this project combines multiple recognit
 ## Recognition Pipeline
 
 ```text
+URL Input (YouTube / Instagram / etc.)
+     │
+     ▼
+yt-dlp (extract audio)
+     │
+     ▼
+FFmpeg (MP3 conversion + normalization: 128kbps)
+     │
+     ▼
 Audio File
      │
      ▼
@@ -80,6 +89,7 @@ The backend is designed to support multiple candidate results when confidence is
 src/
 │
 ├── routes/
+│   ├── urlRecognize.ts
 │   └── recognize.ts
 │
 ├── services/
@@ -87,8 +97,12 @@ src/
 │   ├── acoustid.ts
 │   ├── musicbrainz.ts
 │   ├── shazam.ts
+│   ├── downloader.ts
+│   ├── executableManager.ts
+│   ├── normalizer.ts
 │   └── recognition.ts
 │
+├── config.ts
 └── index.ts
 ```
 
@@ -117,12 +131,22 @@ RAPIDAPI_KEY=your_key
 RAPIDAPI_HOST=your_host
 ```
 
-Place the appropriate **fpcalc** binary inside the `fpcalc/` directory:
+Make sure the executables files are in the `bin/` directory:
 
 ```
-fpcalc/
-    fpcalc.exe      # Windows
-    fpcalc          # Linux
+bin/
+    linux/
+        ffmpeg
+        ffprobe
+        fpcalc
+        yt-dlp
+        
+    windows/
+        ffmpeg.exe
+        ffprobe.exe
+        fpcalc.exe
+        yt-dlp.exe
+                  
 ```
 
 ---
@@ -163,10 +187,24 @@ file
 
 Example:
 
+For audio file:
 ```bash
 curl -X POST \
   -F "file=@song.mp3" \
   http://localhost:3000/recognize
+```
+
+### POST `/urlRecognize`
+
+Upload Youtube/Instagram link for audio detection.
+
+For Youtube/Instagram links:
+```bash
+curl -X POST http://localhost:3000/urlRecognize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  }'
 ```
 
 ---
@@ -202,11 +240,11 @@ curl -X POST \
 
 The backend follows a confidence-based decision flow:
 
-* **High-confidence AcoustID match (≥ 0.90)**
+* **High-confidence AcoustID match (≥ 0.95)**
   Returns the AcoustID + MusicBrainz result.
 
 * **Low-confidence or no AcoustID match**
-  Falls back to Shazam.
+  Falls back to Shazam RapidAPI.
 
 * **Future-ready**
   Supports returning multiple candidate matches when confidence is ambiguous.
@@ -220,8 +258,8 @@ The backend follows a confidence-based decision flow:
 * [x] MusicBrainz integration
 * [x] Shazam fallback
 * [x] Unified recognition pipeline
-* [ ] yt-dlp integration
-* [ ] FFmpeg preprocessing
+* [x] yt-dlp integration
+* [x] FFmpeg preprocessing
 
 ---
 
@@ -239,6 +277,8 @@ This project is built upon the work of several excellent open-source and public 
 * AcoustID
 * MusicBrainz
 * Shazam
+* FFmpeg
+* yt-dlp
 * Express
 * TypeScript
 
