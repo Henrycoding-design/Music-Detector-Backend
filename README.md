@@ -39,7 +39,7 @@ AcoustID
      │                                            
      ▼                                            
 MusicBrainz     
-     ├─────────────── Score ≥ 0.90 ───────────────┐ 
+     ├─────────────── Score ≥ 0.95 ───────────────┐ 
      │                                            │
      ▼                                            ▼
 Shazam API                                 Return Result (MusicBrainz) 
