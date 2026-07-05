@@ -85,7 +85,7 @@ Render build command:
 ```bash
 mkdir -p bin/linux && \
 curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o bin/linux/yt-dlp && \
-curl -L https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz | tar -xJ --wildcards --strip-components=1 -C bin/linux/ "*/ffmpeg" "*/ffprobe" && \
+curl -L https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz | tar -xJ --wildcards --strip-components=2 -C bin/linux/ "*/bin/ffmpeg" "*/bin/ffprobe" && \
 curl -L https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz | tar -xz --strip-components=1 -C bin/linux/ chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc && \
 chmod +x bin/linux/* && \
 npm install && \
