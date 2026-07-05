@@ -3,72 +3,86 @@
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
-import fsSync from "fs";
 
-const isWindows = os.platform() === "win32";
-const isRender = !!process.env.RENDER; // Render sets this env var
+// Helper to determine folder names based on the OS
+const getPlatformFolder = (): string => {
+    const currentPlatform = os.platform();
+    if (currentPlatform === "win32") return "windows";
+    // if (currentPlatform === "darwin") return "macos"; Not support yet
+    return "linux"; // Default for Linux / Render
+};
+
+const platformFolder = getPlatformFolder();
 
 export class ExecutableManager {
 
     /**
-     * Resolve system-first, fallback to local bin only for dev.
+     * Returns the absolute path to an executable stored in /bin.
+     *
+     * Example:
+     * Windows -> /bin/windows/fpcalc.exe
+     * Linux   -> /bin/linux/fpcalc
+     * Mac     -> /bin/macos/fpcalc (Not-supported yet)
      */
-    static resolve(name: string): string {
-
-        // Render / Linux production → system packages (APT)
-        if (isRender) {
-            const systemPath = `/usr/bin/${name}`;
-            if (fsSync.existsSync(systemPath)) return systemPath;
-        }
-
-        // Local dev fallback
-        const localPath = path.join(
+    static getPath(name: string): string {
+        const isWindows = os.platform() === "win32";
+        return path.join(
             process.cwd(),
             "bin",
-            isWindows ? "windows" : "linux",
+            platformFolder,
             isWindows ? `${name}.exe` : name
         );
-
-        return localPath;
-    }
-
-    // Convenience getters
-
-    static get fpcalc() {
-        return this.resolve("fpcalc");
-    }
-
-    static get ytDlp() {
-        return this.resolve("yt-dlp");
-    }
-
-    static get ffmpeg() {
-        return this.resolve("ffmpeg");
-    }
-
-    static get ffprobe() {
-        return this.resolve("ffprobe");
     }
 
     /**
-     * Local-only permission fix (NOT needed on Render)
+     * Ensures all non-Windows executables have execute permissions (755).
+     * Safe to call multiple times.
      */
     static async initialize(): Promise<void> {
-        if (isWindows || isRender) return;
+        // Windows binaries do not use chmod
+        if (os.platform() === "win32") {
+            return;
+        }
 
-        const executables = ["fpcalc", "yt-dlp", "ffmpeg", "ffprobe"];
+        const executables = [
+            "fpcalc",
+            "yt-dlp",
+            "ffmpeg",
+            "ffprobe",
+        ];
 
         await Promise.all(
             executables.map(async (executable) => {
                 try {
-                    await fs.chmod(this.resolve(executable), 0o755);
+                    await fs.chmod(
+                        this.getPath(executable),
+                        0o755
+                    );
                 } catch (err) {
                     console.warn(
-                        `[ExecutableManager] chmod failed for ${executable}:`,
+                        `[ExecutableManager] Failed to chmod ${executable}:`,
                         err
                     );
                 }
             })
         );
+    }
+
+    // Convenience getters
+
+    static get fpcalc(): string {
+        return this.getPath("fpcalc");
+    }
+
+    static get ytDlp(): string {
+        return this.getPath("yt-dlp");
+    }
+
+    static get ffmpeg(): string {
+        return this.getPath("ffmpeg");
+    }
+
+    static get ffprobe(): string {
+        return this.getPath("ffprobe");
     }
 }

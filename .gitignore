@@ -85,3 +85,5 @@ normalized/
 # binaries (IMPORTANT)
 bin/
 *.exe
+
+dev/
