@@ -4,9 +4,15 @@ import multer from "multer";
 import { recognize } from "../services/recognition.js";
 import { normalizeAudio } from "../services/normalizer.js";
 import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
 
 const router = express.Router();
+
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fsSync.existsSync(uploadDir)) {
+    fsSync.mkdirSync(uploadDir, { recursive: true });
+}
 
 const upload = multer({
     dest: "uploads/",
