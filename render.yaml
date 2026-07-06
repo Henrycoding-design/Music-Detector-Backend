@@ -11,8 +11,11 @@ services:
       - key: ACOUSTID_API_KEY
         sync: false
         placeholder: "Get a free API key from https://acoustid.org/login"
-      - key: RAPIDAPI_KEY
+      - key: RAPIDAPI_KEYS
         sync: false
         placeholder: "Your Shazam RapidAPI keys (comma-separated for rotation)"
+      - key: RAPIDAPI_KEY
+        sync: false
+        placeholder: "Optional single key fallback if RAPIDAPI_KEYS is omitted"
       - key: RAPIDAPI_HOST
         value: shazam.p.rapidapi.com
