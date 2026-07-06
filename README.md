@@ -1,8 +1,17 @@
 # 🎵 Music Finder Backend
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+
 A free and open-source music recognition backend built with **Node.js** and **TypeScript**.
 
 Instead of relying on a single provider, this project combines multiple recognition services into one unified pipeline to achieve reliable results while keeping API costs low.
+
+> [!NOTE]  
+> This backend handles the core heavy lifting of downloading, extraction, transcoding, and service fallback. It is perfect for integration with custom web apps, desktop components, or mobile frontends.
+
+---
 
 ## ✨ Features
 
@@ -54,6 +63,7 @@ If AcoustID confidence is low or no match:
                │
                ▼
          Return Result (Shazam API (if any) + MusicBrainz (if any))
+
 ```
 
 The backend is designed to support multiple candidate results when confidence is uncertain.
@@ -79,22 +89,28 @@ The backend is designed to support multiple candidate results when confidence is
 
 ### Deployment
 
-* Render
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Henrycoding-design/Music-Detector-Backend)
 
-Render build command:
+This project is tailored to work out-of-the-box on **Render**.
+
+**Render Build Command:**
+
 ```bash
 mkdir -p bin/linux && \
-curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o bin/linux/yt-dlp && \
-curl -L https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz | tar -xJ --wildcards --strip-components=2 -C bin/linux/ "*/bin/ffmpeg" "*/bin/ffprobe" && \
-curl -L https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz | tar -xz --strip-components=1 -C bin/linux/ chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc && \
+curl -L [https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp) -o bin/linux/yt-dlp && \
+curl -L [https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz) | tar -xJ --wildcards --strip-components=2 -C bin/linux/ "*/bin/ffmpeg" "*/bin/ffprobe" && \
+curl -L [https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz](https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz) | tar -xz --strip-components=1 -C bin/linux/ chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc && \
 chmod +x bin/linux/* && \
 npm install && \
 npm run build
+
 ```
 
-Render start command:
+**Render Start Command:**
+
 ```bash
 npm run start
+
 ```
 
 ---
@@ -120,36 +136,44 @@ src/
 │
 ├── config.ts
 └── index.ts
+
 ```
 
 ---
 
 ## Installation
 
-Clone the repository:
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Henrycoding-design/Music-Detector-Backend.git
+git clone [https://github.com/Henrycoding-design/Music-Detector-Backend.git](https://github.com/Henrycoding-design/Music-Detector-Backend.git)
 cd Music-Detector-Backend
+
 ```
 
-Install dependencies:
+### 2. Install dependencies
 
 ```bash
 npm install
+
 ```
 
-Create a `.env` file:
+### 3. Environment Setup
+
+Create a `.env` file in the root directory:
 
 ```env
 ACOUSTID_API_KEY=your_key
 RAPIDAPI_KEY=your_key
-RAPIDAPI_HOST=your_host
-```
-
-Make sure the executables files are in the `bin/` directory:
+RAPIDAPI_HOST=shazam.p.rapidapi.com
 
 ```
+
+### 4. Binary Executables
+
+The system automatically handles production binaries via the Render build script. For **local development**, ensure the platform-appropriate executable files are placed in the `bin/` directory:
+
+```text
 bin/
     linux/
         ffmpeg
@@ -162,65 +186,68 @@ bin/
         ffprobe.exe
         fpcalc.exe
         yt-dlp.exe
-                  
+
 ```
 
 ---
 
 ## Development
 
-Run the development server:
+Run the local development server (with hot-reloading via `ts-node-dev`):
 
 ```bash
 npm run dev
+
 ```
 
-Build:
+Build the TypeScript project into native JavaScript:
 
 ```bash
 npm run build
+
 ```
 
-Run production:
+Run the production compiled build:
 
 ```bash
 npm start
+
 ```
 
 ---
 
-## API
+## API Documentation
 
 ### POST `/recognize`
 
-Upload an audio file using multipart form-data.
+Upload a raw audio file binary using `multipart/form-data`.
 
-Field name:
+* **Field Name:** `file`
 
-```
-file
-```
+**Example Usage:**
 
-Example:
-
-For audio file:
 ```bash
 curl -X POST \
   -F "file=@song.mp3" \
   http://localhost:3000/recognize
+
 ```
 
 ### POST `/urlRecognize`
 
-Upload Youtube/Instagram link for audio detection.
+Send a public media link (YouTube, Instagram, TikTok, etc.) to trigger stream parsing.
 
-For Youtube/Instagram links:
+* **Headers:** `Content-Type: application/json`
+
+**Example Request:**
+
 ```bash
 curl -X POST http://localhost:3000/urlRecognize \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }'
+
 ```
 
 ---
@@ -248,22 +275,20 @@ curl -X POST http://localhost:3000/urlRecognize \
     }
   ]
 }
+
 ```
 
 ---
 
 ## Response Strategy
 
-The backend follows a confidence-based decision flow:
+The backend optimization follows a confidence-based routing flow:
 
-* **High-confidence AcoustID match (≥ 0.95)**
-  Returns the AcoustID + MusicBrainz result.
+* **High-confidence AcoustID match (≥ 0.95):** Drops execution immediately and relies purely on AcoustID + MusicBrainz open-source layers (0 API cost).
+* **Low-confidence or no AcoustID match:** Falls back cleanly to Shazam RapidAPI endpoints to handle noisy/microphone audio samples.
 
-* **Low-confidence or no AcoustID match**
-  Falls back to Shazam RapidAPI.
-
-* **Future-ready**
-  Supports returning multiple candidate matches when confidence is ambiguous.
+> [!WARNING]
+> Do not intentionally trim or slice the original file length on ingestion. Slicing structural intervals can break continuous wave patterns that AcoustID requires to produce high confidence fingerprint matches.
 
 ---
 
@@ -276,26 +301,35 @@ The backend follows a confidence-based decision flow:
 * [x] Unified recognition pipeline
 * [x] yt-dlp integration
 * [x] FFmpeg preprocessing
+* [ ] Multi-key failover fallback mechanism
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://www.google.com/search?q=https://github.com/Henrycoding-design/Music-Detector-Backend/issues).
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
 ## License
 
-MIT License.
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
 ## Acknowledgements
 
-This project is built upon the work of several excellent open-source and public services:
+This project is built upon the work of excellent open-source and public services:
 
-* Chromaprint
-* AcoustID
-* MusicBrainz
-* Shazam
-* FFmpeg
-* yt-dlp
-* Express
-* TypeScript
-
-Their projects make free music recognition more accessible for everyone.
+* [Chromaprint](https://acoustid.org/chromaprint)
+* [AcoustID](https://acoustid.org/)
+* [MusicBrainz](https://musicbrainz.org/)
+* [Shazam API](https://rapidapi.com/)
+* [FFmpeg](https://ffmpeg.org/)
+* [yt-dlp](https://github.com/yt-dlp/yt-dlp)
