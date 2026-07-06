@@ -87,6 +87,10 @@ The backend is designed to support multiple candidate results when confidence is
 * MusicBrainz
 * Shazam API (fallback)
 
+### Normalization Service
+
+* FFmpeg & FFprobe
+
 ### Deployment
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Henrycoding-design/Music-Detector-Backend)
@@ -125,14 +129,15 @@ src/
 │   └── recognize.ts
 │
 ├── services/
-│   ├── chromaprint.ts
 │   ├── acoustid.ts
-│   ├── musicbrainz.ts
-│   ├── shazam.ts
+│   ├── chromaprint.ts
 │   ├── downloader.ts
 │   ├── executableManager.ts
+│   ├── memoryLogger.ts
+│   ├── musicbrainz.ts
 │   ├── normalizer.ts
-│   └── recognition.ts
+│   ├── recognition.ts
+│   └── shazam.ts
 │
 ├── config.ts
 └── index.ts
@@ -165,9 +170,13 @@ Create a `.env` file in the root directory:
 ```env
 ACOUSTID_API_KEY=your_key
 RAPIDAPI_KEY=your_key
+RAPIDAPI_KEYS=your_key1,your_key2
 RAPIDAPI_HOST=shazam.p.rapidapi.com
 
 ```
+
+> [!NOTE]  
+> You can provide either RAPIDAPI_KEYS (comma-separated for horizontal scale and failover rotation) or a traditional singular RAPIDAPI_KEY. The system prioritizes multi-keys first and fallback to the singular variant.
 
 ### 4. Binary Executables
 
@@ -301,7 +310,8 @@ The backend optimization follows a confidence-based routing flow:
 * [x] Unified recognition pipeline
 * [x] yt-dlp integration
 * [x] FFmpeg preprocessing
-* [ ] Multi-key failover fallback mechanism
+* [x] Multi-key failover fallback mechanism for Shazam RapidAPI
+* [x] Added Memory Logger for a one-off snapshot of current RAM usage to console
 
 ---
 

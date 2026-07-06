@@ -4,7 +4,7 @@ import fs from "fs/promises";
 import { downloadAudio } from "../services/downloader.js";
 import { recognize } from "../services/recognition.js";
 import { normalizeAudio } from "../services/normalizer.js";
-import { normalize } from "path";
+import { logMemorySnapshot } from "../services/memoryLogger.js";
 
 const router = express.Router();
 
@@ -54,6 +54,8 @@ router.post("/", async (req, res) => {
         if (normalized) {
             await fs.unlink(normalized).catch(() => {});
         }
+
+        logMemorySnapshot("URL audio Recognition Endpoint");
 
     }
 

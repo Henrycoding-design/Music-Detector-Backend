@@ -1,8 +1,9 @@
 import express from "express";
 import axios from "axios"
-import multer from "multer";
+import multer, { memoryStorage } from "multer";
 import { recognize } from "../services/recognition.js";
 import { normalizeAudio } from "../services/normalizer.js";
+import { logMemorySnapshot } from "../services/memoryLogger.js";
 import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
@@ -100,6 +101,8 @@ router.post("/", upload.single("file"), async (req, res) => {
         if (normalized) {
             await fs.unlink(normalized).catch(() => {});
         }
+
+        logMemorySnapshot("File audio Recognition Endpoint");
 
     }
 

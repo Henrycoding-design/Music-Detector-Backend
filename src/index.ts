@@ -1,11 +1,10 @@
+import "dotenv/config"; // force dotenv config to run immediately
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import recognizeRouter from "./routes/recognize.js";
 import urlRecognizeRouter from "./routes/urlRecognize.js";
 import { ExecutableManager } from "./services/executableManager.js";
-
-dotenv.config();
 
 const app = express();
 
