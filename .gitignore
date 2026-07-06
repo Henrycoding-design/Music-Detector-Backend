@@ -87,3 +87,6 @@ bin/
 *.exe
 
 dev/
+
+# cookies
+youtube-cookies.txt

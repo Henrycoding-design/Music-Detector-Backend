@@ -5,6 +5,8 @@ import path from "path";
 
 import { ExecutableManager } from "./executableManager.js";
 
+const cookiesPath = process.env.YOUTUBE_COOKIES_PATH ?? '/etc/secrets/youtube-cookies.txt';
+
 export async function downloadAudio(url: string): Promise<string> {
 
     await fs.mkdir("downloads", { recursive: true });
@@ -23,8 +25,11 @@ export async function downloadAudio(url: string): Promise<string> {
         const yt = spawn(
             ExecutableManager.ytDlp,
             [   
-                "--extractor-args", 
-                "youtube:player_client=web,mweb,android",
+                // "--extractor-args", 
+                // "youtube:player_client=web,mweb,android",
+
+                "--cookies", 
+                cookiesPath,
                 
                 "--js-runtimes", 
                 "node",
