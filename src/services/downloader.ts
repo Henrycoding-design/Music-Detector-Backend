@@ -22,7 +22,13 @@ export async function downloadAudio(url: string): Promise<string> {
 
         const yt = spawn(
             ExecutableManager.ytDlp,
-            [
+            [   
+                "--extractor-args", 
+                "youtube:player_client=web,mweb,android",
+                
+                "--js-runtimes", 
+                "node",
+
                 "--no-playlist",
 
                 "-x",

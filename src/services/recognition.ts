@@ -55,7 +55,7 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
     );
 
     // Check if we have a high-confidence AcoustID result
-    if (acoustIdResult && acoustIdResult.confidence >= 0.95 && hasCompleteMetadata) {
+    if (acoustIdResult && acoustIdResult.confidence >= 0.955 && hasCompleteMetadata) {
         console.log(`[Recognition] AcoustID match meets confidence threshold (>= 0.95) and have all vital info. Returning AcoustID result.`);
         return [acoustIdResult];
     }
