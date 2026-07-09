@@ -66,7 +66,8 @@ Download small test audio (via yt-dlp)
 ```
 
 > [!IMPORTANT]
-> **Local Testing vs Deployed Render Requests:** > Local testing (**DO NOT need cookie validation**), as your domestic residential IP is usually trusted by YouTube. This feature exists strictly to ensure that requests deployed on cloud instances (like Render) remain valid and are not rejected or rate-limited by YouTube's data center blocks.
+> **Local Testing vs Deployed Render Requests:** 
+> Local testing (**DO NOT need cookie validation**), as your domestic residential IP is usually trusted by YouTube. This feature exists strictly to ensure that requests deployed on cloud instances (like Render) remain valid and are not rejected or rate-limited by YouTube's data center blocks.
 
 ---
 
@@ -275,11 +276,11 @@ npm start
 
 ## API Documentation
 
-### GET `/api/keep-alive`
+### GET/POST `/api/keep-alive`
 
 Triggers the heartbeat check to test and refresh deployment session cookies using a light test audio stream. This endpoint is typically targeted by external cron jobs or uptime checkers like UptimeRobot.
 
-* **Query Parameters:**
+* **Query Parameters or JSON body fields:**
 * `token`: The secret key matching your configured `HEARTBEAT_SECRET` env variable.
 * `url`: A reliable fallback YouTube URL used to perform the diagnostic audio chunk fetch.
 
