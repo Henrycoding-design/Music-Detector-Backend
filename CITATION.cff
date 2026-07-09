@@ -5,8 +5,8 @@ authors:
     given-names: "Tan Binh"
     alias: "Henrycoding-design"
 title: "Music-Detector-Backend"
-version: "1.0.0"
-date-released: "2026-07-06"
+version: "2.0.0"
+date-released: "2026-07-09"
 url: "https://github.com/Henrycoding-design/Music-Detector-Backend"
 abstract: >-
   A free and open-source music recognition backend built with Node.js and TypeScript

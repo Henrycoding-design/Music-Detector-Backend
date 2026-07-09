@@ -25,6 +25,51 @@ Instead of relying on a single provider, this project combines multiple recognit
 
 ---
 
+## Production Reliability
+
+The backend includes several production-oriented reliability mechanisms:
+
+- 🔄 Automatic YouTube session cookie validation and refresh via **Heartbeat**
+- ❤️ Health-check endpoint designed for uptime monitors (e.g. UptimeRobot)
+- 🔑 Multi-key failover for RapidAPI
+- 💾 Binary auto-management across Windows and Linux
+- 📈 Memory usage logging for long-running deployments
+- ⚠️ Graceful API fallback when providers are temporarily unavailable
+
+### 💓 Heartbeat & Cookie Validation Flow
+
+When deploying to serverless or cloud platforms like **Render**, YouTube often flags or blocks requests coming from data center IP ranges. To bypass this, the backend uses YouTube session cookies. However, these cookies expire or become invalid over time. 
+
+The `/api/keep-alive` heartbeat endpoint acts as a proactive mechanism to solve this. Triggered by a remote cron/uptime monitor, it systematically verifies and refreshes your session cookies before real user requests hit the backend.
+
+```text
+Heartbeat Request Triggered
+             │
+             ▼
+Download small test audio (via yt-dlp)
+             │
+             ▼
+    Is Cookie Valid?
+             │
+     ┌───────┴───────┐
+     │               │
+    Yes             No
+     │               │
+     │               ▼
+     │        Refresh Cookies
+     │               │
+     └───────┬───────┘
+             │
+             ▼
+     Success Response
+
+```
+
+> [!IMPORTANT]
+> **Local Testing vs Deployed Render Requests:** > Local testing (**DO NOT need cookie validation**), as your domestic residential IP is usually trusted by YouTube. This feature exists strictly to ensure that requests deployed on cloud instances (like Render) remain valid and are not rejected or rate-limited by YouTube's data center blocks.
+
+---
+
 ## Recognition Pipeline
 
 ```text
@@ -62,7 +107,7 @@ If AcoustID confidence is low or no match:
           Shazam API
                │
                ▼
-         Return Result (Shazam API (if any) + MusicBrainz (if any))
+          Return Result (Shazam API (if any) + MusicBrainz (if any))
 
 ```
 
@@ -102,7 +147,7 @@ This project is tailored to work out-of-the-box on **Render**.
 ```bash
 mkdir -p bin/linux && \
 curl -L [https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp) -o bin/linux/yt-dlp && \
-curl -L [https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz) | tar -xJ --wildcards --strip-components=2 -C bin/linux/ "*/bin/ffmpeg" "*/bin/ffprobe" && \
+curl -L [https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz) | tar -xJ --wildcards --strip-components=2 -C bin/linux/ '*/bin/ffmpeg' '*/bin/ffprobe' && \
 curl -L [https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz](https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz) | tar -xz --strip-components=1 -C bin/linux/ chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc && \
 chmod +x bin/linux/* && \
 npm install && \
@@ -125,6 +170,7 @@ npm run start
 src/
 │
 ├── routes/
+│   ├── heartbeat.ts
 │   ├── urlRecognize.ts
 │   └── recognize.ts
 │
@@ -172,11 +218,13 @@ ACOUSTID_API_KEY=your_key
 RAPIDAPI_KEY=your_key
 RAPIDAPI_KEYS=your_key1,your_key2
 RAPIDAPI_HOST=shazam.p.rapidapi.com
+HEARTBEAT_SECRET=your_heartbeat_secret
 
 ```
 
-> [!NOTE]  
-> You can provide either RAPIDAPI_KEYS (comma-separated for horizontal scale and failover rotation) or a traditional singular RAPIDAPI_KEY. The system prioritizes multi-keys first and fallback to the singular variant.
+> [!NOTE]
+> You can provide either `RAPIDAPI_KEYS` (comma-separated for horizontal scale and failover rotation) or a traditional singular `RAPIDAPI_KEY`. The system prioritizes multi-keys first and fallbacks to the singular variant.
+> `HEARTBEAT_SECRET` is used to make sure the request is coming from an authorized client, preventing random requests from accidentally triggering your `yt-dlp` download and cookie refreshing loop. Skip if you do not use the `/api/keep-alive` endpoint.
 
 ### 4. Binary Executables
 
@@ -227,6 +275,25 @@ npm start
 
 ## API Documentation
 
+### GET `/api/keep-alive`
+
+Triggers the heartbeat check to test and refresh deployment session cookies using a light test audio stream. This endpoint is typically targeted by external cron jobs or uptime checkers like UptimeRobot.
+
+* **Query Parameters:**
+* `token`: The secret key matching your configured `HEARTBEAT_SECRET` env variable.
+* `url`: A reliable fallback YouTube URL used to perform the diagnostic audio chunk fetch.
+
+
+
+**Example Monitor Configuration (e.g., UptimeRobot HEAD/GET):**
+
+```text
+[https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg](https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg)
+
+```
+
+---
+
 ### POST `/recognize`
 
 Upload a raw audio file binary using `multipart/form-data`.
@@ -242,6 +309,8 @@ curl -X POST \
 
 ```
 
+---
+
 ### POST `/urlRecognize`
 
 Send a public media link (YouTube, Instagram, TikTok, etc.) to trigger stream parsing.
@@ -254,7 +323,7 @@ Send a public media link (YouTube, Instagram, TikTok, etc.) to trigger stream pa
 curl -X POST http://localhost:3000/urlRecognize \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    "url": "[https://www.youtube.com/watch?v=dQw4w9WgXcQ](https://www.youtube.com/watch?v=dQw4w9WgXcQ)"
   }'
 
 ```
@@ -312,6 +381,7 @@ The backend optimization follows a confidence-based routing flow:
 * [x] FFmpeg preprocessing
 * [x] Multi-key failover fallback mechanism for Shazam RapidAPI
 * [x] Added Memory Logger for a one-off snapshot of current RAM usage to console
+* [x] Automated Cookie Keep-Alive validation flow
 
 ---
 
