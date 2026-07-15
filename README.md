@@ -147,9 +147,9 @@ This project is tailored to work out-of-the-box on **Render**.
 
 ```bash
 mkdir -p bin/linux && \
-curl -L [https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp) -o bin/linux/yt-dlp && \
-curl -L [https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz) | tar -xJ --wildcards --strip-components=2 -C bin/linux/ '*/bin/ffmpeg' '*/bin/ffprobe' && \
-curl -L [https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz](https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz) | tar -xz --strip-components=1 -C bin/linux/ chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc && \
+curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o bin/linux/yt-dlp && \
+curl -L https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz | tar -xJ --wildcards --strip-components=2 -C bin/linux/ '*/bin/ffmpeg' '*/bin/ffprobe' && \
+curl -L https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz | tar -xz --strip-components=1 -C bin/linux/ chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc && \
 chmod +x bin/linux/* && \
 npm install && \
 npm run build
@@ -198,7 +198,7 @@ src/
 ### 1. Clone the repository
 
 ```bash
-git clone [https://github.com/Henrycoding-design/Music-Detector-Backend.git](https://github.com/Henrycoding-design/Music-Detector-Backend.git)
+git clone https://github.com/Henrycoding-design/Music-Detector-Backend.git
 cd Music-Detector-Backend
 
 ```
