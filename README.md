@@ -289,7 +289,7 @@ Triggers the heartbeat check to test and refresh deployment session cookies usin
 **Example Monitor Configuration (e.g., UptimeRobot HEAD/GET):**
 
 ```text
-[https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg](https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg)
+https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg
 
 ```
 
@@ -324,7 +324,7 @@ Send a public media link (YouTube, Instagram, TikTok, etc.) to trigger stream pa
 curl -X POST http://localhost:3000/urlRecognize \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "[https://www.youtube.com/watch?v=dQw4w9WgXcQ](https://www.youtube.com/watch?v=dQw4w9WgXcQ)"
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }'
 
 ```
@@ -383,6 +383,7 @@ The backend optimization follows a confidence-based routing flow:
 * [x] Multi-key failover fallback mechanism for Shazam RapidAPI
 * [x] Added Memory Logger for a one-off snapshot of current RAM usage to console
 * [x] Automated Cookie Keep-Alive validation flow
+* [ ] Dedicated normalization and detection pipeline for recorded audio 
 
 ---
 
