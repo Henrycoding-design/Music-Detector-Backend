@@ -19,11 +19,11 @@ Instead of relying on a single provider, this project combines multiple recognit
 > **https://github.com/Henrycoding-design/Music-Detector-Flutter**
 >
 > It demonstrates how to integrate this backend into a modern application, featuring:
-<!-- > - 🎤 Audio recording and recognition -->
 > - 📁 Local audio file recognition
 > - 🔗 Media URL recognition (YouTube, Instagram, TikTok, etc.)
 > - 🌙 Light & Dark theme
 > - 📱 Cross-platform support (Android, iOS, Windows, macOS, Linux, Web)
+<!-- > - 🎤 Audio recording and recognition (Future) -->
 
 ---
 
