@@ -11,6 +11,20 @@ Instead of relying on a single provider, this project combines multiple recognit
 > [!NOTE]  
 > This backend handles the core heavy lifting of downloading, extraction, transcoding, and service fallback. It is perfect for integration with custom web apps, desktop components, or mobile frontends.
 
+> [!TIP]
+> **Looking for a ready-to-use client?**
+>
+> A cross-platform Flutter demo client is available at:
+>
+> **https://github.com/Henrycoding-design/Music-Detector-Flutter**
+>
+> It demonstrates how to integrate this backend into a modern application, featuring:
+<!-- > - 🎤 Audio recording and recognition -->
+> - 📁 Local audio file recognition
+> - 🔗 Media URL recognition (YouTube, Instagram, TikTok, etc.)
+> - 🌙 Light & Dark theme
+> - 📱 Cross-platform support (Android, iOS, Windows, macOS, Linux, Web)
+
 ---
 
 ## ✨ Features
