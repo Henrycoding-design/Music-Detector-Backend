@@ -95,7 +95,7 @@ router.post("/", upload.single("file"), async (req, res) => {
             await fs.unlink(normalized).catch(() => {});
         }
 
-        logMemorySnapshot("Recording Normalization Endpoint");
+        logMemorySnapshot("Recording Recognition Endpoint");
     }
 
 });

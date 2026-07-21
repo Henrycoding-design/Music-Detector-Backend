@@ -4,7 +4,7 @@ import express from "express";
 import cors from "cors";
 import recognizeRouter from "./routes/recognize.js";
 import urlRecognizeRouter from "./routes/urlRecognize.js";
-import normalizeRecording from "./routes/normalizeRecording.js";
+import recordingRecognize from "./routes/recordingRecognize.js";
 import heartbeat from "./routes/heartbeat.js";
 import { ExecutableManager } from "./services/executableManager.js";
 
@@ -22,7 +22,7 @@ app.get("/", (_, res) => {
 
 app.use("/recognize", recognizeRouter);
 app.use("/urlRecognize", urlRecognizeRouter);
-app.use("/recordingRecognize", normalizeRecording);
+app.use("/recordingRecognize", recordingRecognize);
 app.use("/api", heartbeat);
 
 const PORT = process.env.PORT || 3000;
