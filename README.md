@@ -9,7 +9,7 @@ A free and open-source music recognition backend built with **Node.js** and **Ty
 Instead of relying on a single provider, this project combines multiple recognition services into one unified pipeline to achieve reliable results while keeping API costs low.
 
 > [!NOTE]  
-> This backend handles the core heavy lifting of downloading, extraction, transcoding, and service fallback. It is perfect for integration with custom web apps, desktop components, or mobile frontends.
+> This backend handles the core heavy lifting of downloading, extraction, noise-reduction filtering, transcoding, and service fallback. It is perfect for integration with custom web apps, desktop components, or mobile frontends.
 
 > [!TIP]
 > **Looking for a ready-to-use client?**
@@ -20,10 +20,10 @@ Instead of relying on a single provider, this project combines multiple recognit
 >
 > It demonstrates how to integrate this backend into a modern application, featuring:
 > - 📁 Local audio file recognition
+> - 🎤 Audio recording and recognition
 > - 🔗 Media URL recognition (YouTube, Instagram, TikTok, etc.)
 > - 🌙 Light & Dark theme
 > - 📱 Cross-platform support (Android, iOS, Windows, macOS, Linux, Web)
-<!-- > - 🎤 Audio recording and recognition (Future) -->
 
 ---
 
@@ -33,6 +33,7 @@ Instead of relying on a single provider, this project combines multiple recognit
 * 🔍 Song identification through **AcoustID**
 * 📚 Metadata enrichment using **MusicBrainz**
 * 🎧 Automatic fallback to **Shazam RapidAPI** when open databases cannot confidently identify a track
+* 🎙️ Dedicated noise-reduction and normalization pipeline for recorded/microphone audio (using **ARNNDN** recurrent neural network model & FFmpeg filters)
 * 📦 Unified response format regardless of the recognition source
 * 🚀 REST API built with Express
 * 🔒 Fully typed with TypeScript
@@ -76,7 +77,6 @@ Download small test audio (via yt-dlp)
              │
              ▼
      Success Response
-
 ```
 
 > [!IMPORTANT]
@@ -85,13 +85,17 @@ Download small test audio (via yt-dlp)
 
 ---
 
-## Recognition Pipeline
+## Recognition Pipelines
+
+The backend provides tailored pipelines for both standard media/clean audio files and noisy microphone recordings.
+
+### 1. Standard Audio & URL Recognition Pipeline (`/recognize`, `/urlRecognize`)
 
 ```text
-URL Input (YouTube / Instagram / etc.)
+URL Input (YouTube / Instagram / etc.) or Standard Audio File
      │
      ▼
-yt-dlp (extract audio)
+yt-dlp (extract audio) / Direct File Upload
      │
      ▼
 FFmpeg (MP3 conversion + normalization: 128kbps)
@@ -123,7 +127,32 @@ If AcoustID confidence is low or no match:
                │
                ▼
           Return Result (Shazam API (if any) + MusicBrainz (if any))
+```
 
+### 2. Recording Audio Recognition Pipeline (`/recordingRecognize`)
+
+When audio is captured via microphone or recorded in noisy environments, raw acoustic fingerprints often fail due to background noise and low frequency hums. The recording pipeline applies targeted noise suppression before recognition:
+
+```text
+Microphone / Recorded Audio File Upload
+     │
+     ▼
+FFmpeg Audio Normalization & Denoising Pipeline
+ ├── High-pass Filter (removes rumble < 80Hz)
+ ├── afftdn (FFT-based audio denoiser)
+ ├── arnndn (RNN Neural Noise Reduction with models/arnndn/std.rnnn)
+ └── Silence Removal (trims leading silence < -50dB)
+     │
+     ▼
+Clean 16-bit 44.1kHz PCM WAV
+     │
+     ▼
+Chromaprint (fpcalc)
+     │
+     ▼
+AcoustID ──► MusicBrainz (Score ≥ 0.95) ──► Return Result
+     │
+     └──────► Confidence < 0.95 / No Match ──► Shazam API ──► Return Result
 ```
 
 The backend is designed to support multiple candidate results when confidence is uncertain.
@@ -147,9 +176,10 @@ The backend is designed to support multiple candidate results when confidence is
 * MusicBrainz
 * Shazam API (fallback)
 
-### Normalization Service
+### Normalization & Denoising Services
 
 * FFmpeg & FFprobe
+* ARNNDN (RNN-based neural noise suppression using `models/arnndn/std.rnnn`)
 
 ### Deployment
 
@@ -167,14 +197,12 @@ curl -L https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromap
 chmod +x bin/linux/* && \
 npm install && \
 npm run build
-
 ```
 
 **Render Start Command:**
 
 ```bash
 npm run start
-
 ```
 
 ---
@@ -186,8 +214,9 @@ src/
 │
 ├── routes/
 │   ├── heartbeat.ts
-│   ├── urlRecognize.ts
-│   └── recognize.ts
+│   ├── recognize.ts
+│   ├── recordingRecognize.ts
+│   └── urlRecognize.ts
 │
 ├── services/
 │   ├── acoustid.ts
@@ -202,7 +231,6 @@ src/
 │
 ├── config.ts
 └── index.ts
-
 ```
 
 ---
@@ -214,14 +242,12 @@ src/
 ```bash
 git clone https://github.com/Henrycoding-design/Music-Detector-Backend.git
 cd Music-Detector-Backend
-
 ```
 
 ### 2. Install dependencies
 
 ```bash
 npm install
-
 ```
 
 ### 3. Environment Setup
@@ -234,7 +260,6 @@ RAPIDAPI_KEY=your_key
 RAPIDAPI_KEYS=your_key1,your_key2
 RAPIDAPI_HOST=shazam.p.rapidapi.com
 HEARTBEAT_SECRET=your_heartbeat_secret
-
 ```
 
 > [!NOTE]
@@ -258,7 +283,6 @@ bin/
         ffprobe.exe
         fpcalc.exe
         yt-dlp.exe
-
 ```
 
 ---
@@ -269,21 +293,18 @@ Run the local development server (with hot-reloading via `ts-node-dev`):
 
 ```bash
 npm run dev
-
 ```
 
 Build the TypeScript project into native JavaScript:
 
 ```bash
 npm run build
-
 ```
 
 Run the production compiled build:
 
 ```bash
 npm start
-
 ```
 
 ---
@@ -295,16 +316,13 @@ npm start
 Triggers the heartbeat check to test and refresh deployment session cookies using a light test audio stream. This endpoint is typically targeted by external cron jobs or uptime checkers like UptimeRobot.
 
 * **Query Parameters or JSON body fields:**
-* `token`: The secret key matching your configured `HEARTBEAT_SECRET` env variable.
-* `url`: A reliable fallback YouTube URL used to perform the diagnostic audio chunk fetch.
-
-
+  * `token`: The secret key matching your configured `HEARTBEAT_SECRET` env variable.
+  * `url`: A reliable fallback YouTube URL used to perform the diagnostic audio chunk fetch.
 
 **Example Monitor Configuration (e.g., UptimeRobot HEAD/GET):**
 
 ```text
 https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg
-
 ```
 
 ---
@@ -321,7 +339,23 @@ Upload a raw audio file binary using `multipart/form-data`.
 curl -X POST \
   -F "file=@song.mp3" \
   http://localhost:3000/recognize
+```
 
+---
+
+### POST `/recordingRecognize`
+
+Upload a noisy audio sample or microphone recording binary using `multipart/form-data`. The backend applies high-pass filtering, FFT noise suppression, RNN deep learning noise reduction (`arnndn`), and silence removal to produce clean PCM WAV before recognition.
+
+* **Field Name:** `file`
+* **Supported Extensions:** `.mp3`, `.wav`, `.flac`, `.m4a`, `.aac`, `.ogg` (up to 10MB)
+
+**Example Usage:**
+
+```bash
+curl -X POST \
+  -F "file=@recording.wav" \
+  http://localhost:3000/recordingRecognize
 ```
 
 ---
@@ -340,7 +374,6 @@ curl -X POST http://localhost:3000/urlRecognize \
   -d '{
     "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }'
-
 ```
 
 ---
@@ -368,7 +401,6 @@ curl -X POST http://localhost:3000/urlRecognize \
     }
   ]
 }
-
 ```
 
 ---
@@ -381,7 +413,7 @@ The backend optimization follows a confidence-based routing flow:
 * **Low-confidence or no AcoustID match:** Falls back cleanly to Shazam RapidAPI endpoints to handle noisy/microphone audio samples.
 
 > [!WARNING]
-> Do not intentionally trim or slice the original file length on ingestion. Slicing structural intervals can break continuous wave patterns that AcoustID requires to produce high confidence fingerprint matches.
+> Do not intentionally trim or slice the original file length on ingestion for clean files. Slicing structural intervals can break continuous wave patterns that AcoustID requires to produce high confidence fingerprint matches.
 
 ---
 
@@ -397,18 +429,18 @@ The backend optimization follows a confidence-based routing flow:
 * [x] Multi-key failover fallback mechanism for Shazam RapidAPI
 * [x] Added Memory Logger for a one-off snapshot of current RAM usage to console
 * [x] Automated Cookie Keep-Alive validation flow
-* [ ] Dedicated normalization and detection pipeline for recorded audio 
+* [x] Dedicated normalization and detection pipeline for recorded audio
 
 ---
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://www.google.com/search?q=https://github.com/Henrycoding-design/Music-Detector-Backend/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Henrycoding-design/Music-Detector-Backend/issues).
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+4. Push to the Branch (`git commit -m 'Add some AmazingFeature'`)
 5. Open a Pull Request
 
 ---
