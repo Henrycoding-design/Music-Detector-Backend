@@ -199,6 +199,15 @@ npm install && \
 npm run build
 ```
 
+> [!IMPORTANT]
+> **Keep the binary download step in the Render Build Command.**
+>
+> The backend depends on external binaries such as **yt-dlp**, FFmpeg, and Chromaprint. In particular, YouTube extraction behavior can change over time, and an outdated `yt-dlp` binary may suddenly stop working even when the backend code, cookies, and configuration are unchanged.
+>
+> The Render build command intentionally downloads the **latest yt-dlp release on every rebuild**. Do not replace this with a permanently pinned or manually uploaded binary unless there is a specific reason to do so.
+>
+> **If YouTube extraction suddenly starts failing after previously working normally, it's recommended to rebuild the Render service first to refresh the yt-dlp binary before troubleshooting cookies or rewriting the downloader.**
+
 **Render Start Command:**
 
 ```bash
@@ -414,6 +423,34 @@ The backend optimization follows a confidence-based routing flow:
 
 > [!WARNING]
 > Do not intentionally trim or slice the original file length on ingestion for clean files. Slicing structural intervals can break continuous wave patterns that AcoustID requires to produce high confidence fingerprint matches.
+
+---
+
+## 🔧 Troubleshooting YouTube / yt-dlp Extraction
+
+If YouTube URL recognition suddenly stops working and the logs contain errors similar to:
+
+```text
+HTTP Error 429: Too Many Requests
+HTTP Error 403: Forbidden
+Failed to extract any player response
+```
+
+first check the **installed yt-dlp version**.
+
+If the same failure occurs with multiple unrelated YouTube URLs, test the downloader locally as well. If localhost produces the same error, the problem is likely with the installed yt-dlp version or its current YouTube extraction compatibility rather than Render or session cookies.
+
+**Recommended troubleshooting order**:
+1. Rebuild the Render service to download the latest yt-dlp binary.
+2. Verify the yt-dlp version after deployment.
+3. Test a single YouTube URL.
+4. If the problem persists, test the same URL locally.
+5. Only then investigate session cookies, YouTube throttling, or downloader configuration.
+
+> [!TIP]
+> First response to 429 → 403 → Failed to extract any player response: rebuild.
+> 
+> yt-dlp is actively maintained and YouTube frequently changes its player/extraction behavior. Updating the binary can resolve extraction failures without requiring any changes to the backend code or cookie system.
 
 ---
 
