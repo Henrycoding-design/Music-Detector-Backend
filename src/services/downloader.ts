@@ -30,7 +30,8 @@ export async function downloadAudio(url: string): Promise<string> {
     async function buildArgs(): Promise<string[]> {
         const args = [
             "--js-runtimes", "node",
-            "--extractor-args", "youtube:player_client=default,web_embedded",
+            // "--extractor-args", "youtube:player_client=default,web_embedded",
+            "--force-ipv4",
             "--no-playlist",
             "-x",
             "--audio-format", "mp3",
