@@ -31,7 +31,7 @@ export async function downloadAudio(url: string): Promise<string> {
         const args = [
             "--js-runtimes", "node",
             // "--extractor-args", "youtube:player_client=default,web_embedded",
-            "--force-ipv6",
+            "--force-ipv4", // ipv6 got connectivity issues
             // "--extractor-args", "youtube:player_client=android",
             "--no-playlist",
             "-x",
