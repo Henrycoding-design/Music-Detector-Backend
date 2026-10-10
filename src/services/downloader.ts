@@ -7,6 +7,8 @@ import { ExecutableManager } from "./executableManager.js";
 
 // Master source config from your environment variables or Render secrets
 const masterCookiesPath = process.env.YOUTUBE_COOKIES_PATH ?? '/etc/secrets/youtube-cookies.txt';
+const PO_Token = process.env.YOUTUBE_PO_TOKEN;
+const Visitor_Data = process.env.YOUTUBE_VISITOR_DATA;
 
 async function fileExists(filePath: string): Promise<boolean> {
     try {
@@ -26,12 +28,17 @@ export async function downloadAudio(url: string): Promise<string> {
     const ffmpegDir = path.dirname(ExecutableManager.ffmpeg);
     const activeCookiesPath = path.join("downloads", "session_cookies", "live-youtube-cookies.txt");
 
+    const extractorArgs =
+    PO_Token && Visitor_Data
+        ? `youtube:player_client=mweb;visitor_data=${Visitor_Data};po_token=mweb.gvs+${PO_Token}`
+        : "youtube:player_client=web,mweb,android,tv_downgraded";
+
     // Helper function to build fresh arguments depending on cookie state
     async function buildArgs(): Promise<string[]> {
         const args = [
             "--js-runtimes", "node",
-            "--extractor-args", "youtube:player_client=web,mweb,android,tv_downgraded",
-            "-f", "bestaudio/best",
+            "--extractor-args", extractorArgs,
+            "-f", "251/140/bestaudio/best",
             "--no-playlist",
             "-x",
             "--audio-format", "mp3",

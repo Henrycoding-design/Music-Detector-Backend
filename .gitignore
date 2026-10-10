@@ -89,8 +89,7 @@ bin/
 dev/
 
 # cookies
-youtube-cookies.txt
-youtube-cookies2.txt
+youtube-cookies*.txt
 
 # test
 test/
