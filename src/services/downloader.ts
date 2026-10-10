@@ -28,16 +28,16 @@ export async function downloadAudio(url: string): Promise<string> {
     const ffmpegDir = path.dirname(ExecutableManager.ffmpeg);
     const activeCookiesPath = path.join("downloads", "session_cookies", "live-youtube-cookies.txt");
 
-    const extractorArgs =
-    PO_Token && Visitor_Data
-        ? `youtube:player_client=mweb;visitor_data=${Visitor_Data};po_token=mweb.gvs+${PO_Token}`
-        : "youtube:player_client=web,mweb,android,tv_downgraded";
+    // const extractorArgs =
+    // PO_Token && Visitor_Data
+    //     ? `youtube:player_client=mweb;visitor_data=${Visitor_Data};po_token=mweb.gvs+${PO_Token}`
+        // : "youtube:player_client=web,mweb,android,tv_downgraded";
 
     // Helper function to build fresh arguments depending on cookie state
     async function buildArgs(): Promise<string[]> {
         const args = [
             "--js-runtimes", "node",
-            "--extractor-args", extractorArgs,
+            "--extractor-args", "youtube:player_client=web,mweb,android,tv_downgraded",
             "-f", "251/140/bestaudio/best",
             "--no-playlist",
             "-x",
