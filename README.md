@@ -11,6 +11,17 @@ Instead of relying on a single provider, this project combines multiple recognit
 > [!NOTE]  
 > This backend handles the core heavy lifting of downloading, extraction, noise-reduction filtering, transcoding, and service fallback. It is perfect for integration with custom web apps, desktop components, or mobile frontends.
 
+> [!WARNING]
+> **Known issue: YouTube/URL recognition no longer works on cloud deployments (e.g. Render).**
+>
+> For about 3 months, the **Heartbeat** logic (constantly validating and refreshing YouTube session cookies) kept `/urlRecognize` working on Render. That workaround has stopped working: YouTube now appears to block Render's IP addresses entirely, so requests fail with `HTTP 429` / `HTTP 403 Forbidden` and `Failed to extract any player response`, **no matter how fresh the cookies are**.
+>
+> Cookies, PO tokens, newer `yt-dlp` builds, other player clients and a new Web Service in a different region were all tested and did not fix it. See [issue #1](https://github.com/Henrycoding-design/Music-Detector-Backend/issues/1) for the full investigation.
+>
+> - ✅ **Works:** running the backend **locally**, or behind a **reliable (ideally residential) proxy**.
+> - ✅ **Unaffected:** `/recognize` and `/recordingRecognize`, which don't use `yt-dlp`.
+> - ❌ **Not working as intended:** `/urlRecognize` and the `/api/keep-alive` heartbeat on cloud-hosted deployments.
+
 > [!TIP]
 > **Looking for a ready-to-use client?**
 >
