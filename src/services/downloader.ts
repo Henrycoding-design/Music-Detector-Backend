@@ -36,6 +36,7 @@ export async function downloadAudio(url: string): Promise<string> {
 
 
     const proxyArgs = proxyURL ? ["--proxy", proxyURL] : [];
+    const MAX_DURATION_SECONDS = 480 // 8 mins
 
     // Helper function to build fresh arguments depending on cookie state
     async function buildArgs(): Promise<string[]> {
@@ -43,6 +44,7 @@ export async function downloadAudio(url: string): Promise<string> {
             "--js-runtimes", "node",
             // "--extractor-args", "youtube:player_client=web,mweb,android,tv_downgraded",
             ...proxyArgs,
+            "--match-filters", `duration<=${MAX_DURATION_SECONDS} & !is_live`,
             "-f", "251/140/bestaudio/best",
             "--no-playlist",
             "-x",
@@ -86,6 +88,10 @@ export async function downloadAudio(url: string): Promise<string> {
                 const fullLog = stdout + "\n" + stderr;
                 if (code !== 0) {
                     return reject(new Error(fullLog || `yt-dlp exited with code ${code}`));
+                }
+                if (/does not pass filter/i.test(fullLog)) {
+                    // prevents too long audio/streaming vids from consuming proxy bandwidth
+                    return reject(new Error("VIDEO_TOO_LONG"));
                 }
                 resolve(path.join("downloads", `${id}.mp3`));
             });
