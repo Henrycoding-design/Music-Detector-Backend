@@ -11,16 +11,16 @@ Instead of relying on a single provider, this project combines multiple recognit
 > [!NOTE]  
 > This backend handles the core heavy lifting of downloading, extraction, noise-reduction filtering, transcoding, and service fallback. It is perfect for integration with custom web apps, desktop components, or mobile frontends.
 
-> [!WARNING]
-> **Known issue: YouTube/URL recognition no longer works on cloud deployments (e.g. Render).**
+> [!IMPORTANT]
+> **YouTube/URL recognition on cloud hosts (e.g. Render) requires a proxy.**
 >
-> For about 3 months, the **Heartbeat** logic (constantly validating and refreshing YouTube session cookies) kept `/urlRecognize` working on Render. That workaround has stopped working: YouTube now appears to block Render's IP addresses entirely, so requests fail with `HTTP 429` / `HTTP 403 Forbidden` and `Failed to extract any player response`, **no matter how fresh the cookies are**.
+> YouTube blocks datacenter IP ranges, including Render's. Without a proxy, `/urlRecognize` fails with `HTTP 429` / `HTTP 403 Forbidden` and `Failed to extract any player response`, no matter how fresh the cookies are. Cookies, PO tokens, newer `yt-dlp` builds, other player clients and a different Render region do **not** fix it. See [issue #1](https://github.com/Henrycoding-design/Music-Detector-Backend/issues/1) for the full investigation.
 >
-> Cookies, PO tokens, newer `yt-dlp` builds, other player clients and a new Web Service in a different region were all tested and did not fix it. See [issue #1](https://github.com/Henrycoding-design/Music-Detector-Backend/issues/1) for the full investigation.
+> **Fix:** set the `PROXY_URL` environment variable to an HTTP proxy. All `yt-dlp` traffic is routed through it.
 >
-> - ✅ **Works:** running the backend **locally**, or behind a **reliable (ideally residential) proxy**.
-> - ✅ **Unaffected:** `/recognize` and `/recordingRecognize`, which don't use `yt-dlp`.
-> - ❌ **Not working as intended:** `/urlRecognize` and the `/api/keep-alive` heartbeat on cloud-hosted deployments.
+> - ✅ **Local:** works without a proxy (residential IPs are generally trusted).
+> - ✅ **Cloud + proxy:** works. Verified on Render with a free-tier datacenter proxy (Webshare). Residential proxies are more reliable long term.
+> - ✅ **Unaffected:** `/recognize` and `/recordingRecognize` never use `yt-dlp` or the proxy.
 
 > [!TIP]
 > **Looking for a ready-to-use client?**
@@ -61,8 +61,13 @@ The backend includes several production-oriented reliability mechanisms:
 - 💾 Binary auto-management across Windows and Linux
 - 📈 Memory usage logging for long-running deployments
 - ⚠️ Graceful API fallback when providers are temporarily unavailable
+- 🌐 Optional proxy support for `yt-dlp` (`PROXY_URL`) to work around cloud IP blocking
+- ⏱️ Duration guard: videos longer than 8 minutes and live streams are rejected before download
 
 ### 💓 Heartbeat & Cookie Validation Flow
+
+> [!NOTE]
+> The heartbeat was originally built to keep YouTube session cookies alive on Render. It could not fix IP-level blocking, which is now handled by `PROXY_URL`. Cookies are **optional** and only needed if YouTube returns "Sign in to confirm you're not a bot". The heartbeat is optional too. If you enable it, note that it also sends requests through the proxy and consumes its bandwidth quota.
 
 When deploying to serverless or cloud platforms like **Render**, YouTube often flags or blocks requests coming from data center IP ranges. To bypass this, the backend uses YouTube session cookies. However, these cookies expire or become invalid over time. 
 
@@ -280,6 +285,8 @@ RAPIDAPI_KEY=your_key
 RAPIDAPI_KEYS=your_key1,your_key2
 RAPIDAPI_HOST=shazam.p.rapidapi.com
 HEARTBEAT_SECRET=your_heartbeat_secret
+# Optional. Required on cloud hosts such as Render. Keep it in env vars/secrets.
+PROXY_URL=http://username:password@host:port
 ```
 
 > [!NOTE]
@@ -342,7 +349,7 @@ Triggers the heartbeat check to test and refresh deployment session cookies usin
 **Example Monitor Configuration (e.g., UptimeRobot HEAD/GET):**
 
 ```text
-https://music-detector-backend.onrender.com/api/keep-alive?token=MusicFinderBackendHearbeatSecret&url=https://www.youtube.com/watch?v=1kehqCLudyg
+https://music-detector-backend.onrender.com/api/keep-alive?token=your_secret&url=https://www.youtube.com/watch?v=1kehqCLudyg
 ```
 
 ---
@@ -385,6 +392,7 @@ curl -X POST \
 Send a public media link (YouTube, Instagram, TikTok, etc.) to trigger stream parsing.
 
 * **Headers:** `Content-Type: application/json`
+* **Limits:** videos longer than **8 minutes** and **live streams** are rejected before download (`VIDEO_TOO_LONG`) to save proxy bandwidth and disk. Change `MAX_DURATION_SECONDS` in `src/services/downloader.ts` to adjust.
 
 **Example Request:**
 
@@ -439,7 +447,7 @@ The backend optimization follows a confidence-based routing flow:
 
 ## 🔧 Troubleshooting YouTube / yt-dlp Extraction
 
-If YouTube URL recognition suddenly stops working and the logs contain errors similar to:
+If `/urlRecognize` fails with errors like:
 
 ```text
 HTTP Error 429: Too Many Requests
@@ -447,21 +455,15 @@ HTTP Error 403: Forbidden
 Failed to extract any player response
 ```
 
-first check the **installed yt-dlp version**.
+**Recommended order:**
+1. **Does it work locally?** If yes and it fails only on the cloud host, the host's IP is blocked. Set `PROXY_URL` (see above).
+2. **Already using a proxy?** Check that the proxy isn't out of bandwidth, then rotate to another IP from the pool. If datacenter IPs keep getting blocked, move to a residential proxy.
+3. **Fails everywhere, including locally?** Rebuild the service to pull the latest `yt-dlp` binary and verify with `yt-dlp --version`.
+4. **"Sign in to confirm you're not a bot"?** Only then provide session cookies, and test them separately from other changes.
+5. **Still failing?** Consider a PO token provider such as [bgutil-ytdlp-pot-provider](https://github.com/Brainicism/bgutil-ytdlp-pot-provider).
 
-If the same failure occurs with multiple unrelated YouTube URLs, test the downloader locally as well. If localhost produces the same error, the problem is likely with the installed yt-dlp version or its current YouTube extraction compatibility rather than Render or session cookies.
-
-**Recommended troubleshooting order**:
-1. Rebuild the Render service to download the latest yt-dlp binary.
-2. Verify the yt-dlp version after deployment.
-3. Test a single YouTube URL.
-4. If the problem persists, test the same URL locally.
-5. Only then investigate session cookies, YouTube throttling, or downloader configuration.
-
-> [!TIP]
-> First response to 429 → 403 → Failed to extract any player response: rebuild.
-> 
-> yt-dlp is actively maintained and YouTube frequently changes its player/extraction behavior. Updating the binary can resolve extraction failures without requiring any changes to the backend code or cookie system.
+> [!NOTE]
+> Using proxies to access YouTube may conflict with YouTube's Terms of Service. This is fine for personal and testing use but fragile for a public service.
 
 ---
 
@@ -478,6 +480,8 @@ If the same failure occurs with multiple unrelated YouTube URLs, test the downlo
 * [x] Added Memory Logger for a one-off snapshot of current RAM usage to console
 * [x] Automated Cookie Keep-Alive validation flow
 * [x] Dedicated normalization and detection pipeline for recorded audio
+* [x] Proxy support for `yt-dlp` to work around cloud IP blocking
+* [x] Duration and live-stream guard for URL recognition
 
 ---
 
@@ -488,7 +492,7 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ---
