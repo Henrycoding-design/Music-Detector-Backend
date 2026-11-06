@@ -128,7 +128,7 @@ AcoustID
      │                                            
      ▼                                            
 MusicBrainz     
-     ├─────────────── Score ≥ 0.95 ───────────────┐ 
+     ├─────────────── Score ≥ 0.90 ───────────────┐ 
      │                                            │
      ▼                                            ▼
 Shazam API                                 Return Result (MusicBrainz) 
@@ -166,9 +166,9 @@ Clean 16-bit 44.1kHz PCM WAV
 Chromaprint (fpcalc)
      │
      ▼
-AcoustID ──► MusicBrainz (Score ≥ 0.95) ──► Return Result
+AcoustID ──► MusicBrainz (Score ≥ 0.90) ──► Return Result
      │
-     └──────► Confidence < 0.95 / No Match ──► Shazam API ──► Return Result
+     └──────► Confidence < 0.90 / No Match ──► Shazam API ──► Return Result
 ```
 
 The backend is designed to support multiple candidate results when confidence is uncertain.
@@ -437,7 +437,7 @@ curl -X POST http://localhost:3000/urlRecognize \
 
 The backend optimization follows a confidence-based routing flow:
 
-* **High-confidence AcoustID match (≥ 0.95):** Drops execution immediately and relies purely on AcoustID + MusicBrainz open-source layers (0 API cost).
+* **High-confidence AcoustID match (≥ 0.90):** Drops execution immediately and relies purely on AcoustID + MusicBrainz open-source layers (0 API cost).
 * **Low-confidence or no AcoustID match:** Falls back cleanly to Shazam RapidAPI endpoints to handle noisy/microphone audio samples.
 
 > [!WARNING]

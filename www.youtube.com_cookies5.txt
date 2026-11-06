@@ -1,0 +1,18 @@
+# Netscape HTTP Cookie File
+# https://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file! Do not edit.
+
+.youtube.com	TRUE	/	TRUE	1828536080	PREF	f4=4000000&tz=Asia.Saigon
+.youtube.com	TRUE	/	TRUE	1815059850	__Secure-1PSIDTS	sidts-CjUByojQU8KJPskLvhuGwlELfU3HmgdTXPxmeheaupUZEjOBe06xNu-XShzKvj2BmWQ1XmVXHxAA
+.youtube.com	TRUE	/	TRUE	1815059850	__Secure-3PSIDTS	sidts-CjUByojQU8KJPskLvhuGwlELfU3HmgdTXPxmeheaupUZEjOBe06xNu-XShzKvj2BmWQ1XmVXHxAA
+.youtube.com	TRUE	/	TRUE	1818083850	__Secure-3PAPISID	P94hghDX89psOfPR/Aw3xBfyfe3amjWagQ
+.youtube.com	TRUE	/	TRUE	1818083850	__Secure-3PSID	g.a000_wiyEOEAJZI_FUXbiRG7bhqWWoFoW9I084voyITc5eOAZmRk5W17g_QZ5k2GvxzyPgEMFQACgYKAacSARASFQHGX2MiXBeZ2mC99iaqSjAZTNCnihoVAUF8yKqE0LgBl5Srozq9wkLQ9YFs0076
+.youtube.com	TRUE	/	TRUE	1815060222	__Secure-3PSIDCC	AKEyXzVN7PLAesv_ynmfN-11xzxOzQOOZGRKUDlwHDTX8Mq6Ue_iC5W_ta_KUBID383pmFjD
+.youtube.com	TRUE	/	TRUE	1807107146	__Secure-BUCKET	CLEC
+.youtube.com	TRUE	/	TRUE	1793977875	GPS	1
+.youtube.com	TRUE	/	TRUE	1793976685	CONSISTENCY	AIudn8oK8ge__M2DGwaTumORewOXIcS9cO9uSOqzpyvhMWsgVhmueBxMiJMUVMGvRt1lHtb9H4DfHsNLujLqwfoHaw8rdU0H4XMrcVnVdbwQIq1Jh3DHBi0M1LqujY9d6_ItraYyP7mzx7AnABi9Qz4
+.youtube.com	TRUE	/	TRUE	0	YSC	riHBtKLDx1g
+.youtube.com	TRUE	/	TRUE	1809528084	VISITOR_INFO1_LIVE	rOwR_sJ43Fk
+.youtube.com	TRUE	/	TRUE	1809528084	VISITOR_PRIVACY_METADATA	CgJWThIEGgAgbg%3D%3D
+.youtube.com	TRUE	/	TRUE	1809528075	__Secure-ROLLOUT_TOKEN	CIyloK3WgZaLOxCe7bT2r8OVAxiXo9PVyfOXAw%3D%3D
+.youtube.com	TRUE	/	TRUE	1809528077	__Secure-YNID	CuwBCAUSngEBDB6PDFnrB-Jhz8F28tr7WiDeO_DxmEk7vLXeUd3YzW-OA_CYh1kCJ7eAwBrBszYLjPa46pzulZk7lHgeln8uW9KXTgl0e-iApFdJnlaSvKzqsoLj2udWn6R2Dv6bD6dxKFawrJvK41SOfMH1nVzF6C8Qa0XA0f8IHrppk3UMPGa-tmjGM4KrEDzwG5qa1cN8npHywhCZ3fLhOKziVCgFMkUBHFj1ar1ujralyqQ6qa5Yeilpq5Jbh53KejTDe-0Pt0GJUZsfpE8csLT2FfSOmnezxVna0pE3hAYgmFUymNFFbmKqeQs
