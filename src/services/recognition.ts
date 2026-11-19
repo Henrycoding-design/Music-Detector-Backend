@@ -2,7 +2,8 @@ import { fingerprintAudio } from "./chromaprint.js";
 import { identifyByAcoustID } from "./acoustid.js";
 import { lookupRecording } from "./musicbrainz.js";
 import { recognizeSong } from "./shazam.js";
-import type { MusicResult } from "../config.js";
+import { attachLinksToResults } from "./platformLinks.js";
+import type { MusicResult, RecognizeResult } from "../config.js";
 
 export async function recognize(filePath: string): Promise<MusicResult[]> {
     let acoustIdResult: MusicResult | null = null;
@@ -57,7 +58,9 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
     // Check if we have a high-confidence AcoustID result
     if (acoustIdResult && acoustIdResult.confidence >= 0.90 && hasCompleteMetadata) {
         console.log(`[Recognition] AcoustID match meets confidence threshold (>= 0.90) and have all vital info. Returning AcoustID result.`);
-        return [acoustIdResult];
+        const linkEnrichedAcoustIdResult = await attachLinksToResults([acoustIdResult]);
+        console.log(linkEnrichedAcoustIdResult)
+        return linkEnrichedAcoustIdResult;
     }
 
     console.log(`[Recognition] AcoustID confidence is low or no match. Querying Shazam...`);
@@ -86,7 +89,7 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
 
     console.log(shazamResultUnified);
 
-    const results: MusicResult[] = [];
+    const results: RecognizeResult = [];
     if (acoustIdResult) {
         results.push(acoustIdResult);
     }
@@ -94,5 +97,9 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
         results.push(shazamResultUnified);
     }
 
-    return results;
+    const linkEnrichedResults = await attachLinksToResults(results);
+
+    console.log(linkEnrichedResults);
+
+    return linkEnrichedResults;
 }

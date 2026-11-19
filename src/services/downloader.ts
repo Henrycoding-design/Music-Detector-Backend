@@ -8,6 +8,7 @@ import { ExecutableManager } from "./executableManager.js";
 // Master source config from your environment variables or Render secrets
 const masterCookiesPath = process.env.YOUTUBE_COOKIES_PATH ?? '/etc/secrets/youtube-cookies.txt';
 const proxyURL = process.env.PROXY_URL ?? "";
+const useProxy = process.env.USE_PROXY?.toString().toLowerCase() === "true";
 const PO_Token = process.env.YOUTUBE_PO_TOKEN;
 const Visitor_Data = process.env.YOUTUBE_VISITOR_DATA;
 
@@ -35,23 +36,32 @@ export async function downloadAudio(url: string): Promise<string> {
         // : "youtube:player_client=web,mweb,android,tv_downgraded";
 
 
-    const proxyArgs = proxyURL ? ["--proxy", proxyURL] : [];
+    // const proxyArgs = proxyURL ? ["--proxy", proxyURL] : [];
     const MAX_DURATION_SECONDS = 480 // 8 mins
 
     // Helper function to build fresh arguments depending on cookie state
     async function buildArgs(): Promise<string[]> {
+        const proxyEnabled = useProxy && !!proxyURL;
+
+        if (useProxy && !proxyURL) {
+            console.warn("[downloader] USE_PROXY is true but PROXY_URL is empty");
+        }
+
         const args = [
             "--js-runtimes", "node",
             // "--extractor-args", "youtube:player_client=web,mweb,android,tv_downgraded",
-            ...proxyArgs,
             "--match-filters", `duration<=${MAX_DURATION_SECONDS} & !is_live`,
             "-f", "251/140/bestaudio/best",
             "--no-playlist",
             "-x",
             "--audio-format", "mp3",
             "--ffmpeg-location", ffmpegDir,
-            "-o", outputTemplate
+            "-o", outputTemplate,
         ];
+
+        if (proxyEnabled) {
+            args.unshift("--proxy", proxyURL);
+        }
 
         const hasLiveCookies = await fileExists(activeCookiesPath);
         const hasMasterCookies = await fileExists(masterCookiesPath);

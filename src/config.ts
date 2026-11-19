@@ -14,6 +14,13 @@ export interface MusicResult {
     genres: string[];
     cover: string | null;
     shazamUrl: string | null;
+    links?: PlatformLinks;
 }
 
 export type RecognizeResult = MusicResult[];
+
+export interface PlatformLinks {
+  spotify: string | null;
+  appleMusic: string | null;
+  youtube: string | null;
+}
