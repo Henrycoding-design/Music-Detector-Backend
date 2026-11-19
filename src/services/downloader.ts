@@ -8,7 +8,7 @@ import { ExecutableManager } from "./executableManager.js";
 // Master source config from your environment variables or Render secrets
 const masterCookiesPath = process.env.YOUTUBE_COOKIES_PATH ?? '/etc/secrets/youtube-cookies.txt';
 const proxyURL = process.env.PROXY_URL ?? "";
-const useProxy = process.env.USE_PROXY?.toString().toLowerCase() === "true";
+const useProxy = process.env.USE_PROXY?.trim().toString().toLowerCase() === "true";
 const PO_Token = process.env.YOUTUBE_PO_TOKEN;
 const Visitor_Data = process.env.YOUTUBE_VISITOR_DATA;
 
