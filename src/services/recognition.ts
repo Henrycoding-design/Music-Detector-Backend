@@ -58,7 +58,8 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
     // Check if we have a high-confidence AcoustID result
     if (acoustIdResult && acoustIdResult.confidence >= 0.90 && hasCompleteMetadata) {
         console.log(`[Recognition] AcoustID match meets confidence threshold (>= 0.90) and have all vital info. Returning AcoustID result.`);
-        const linkEnrichedAcoustIdResult = await attachLinksToResults([acoustIdResult]);
+        const isrcCountry = acoustIdResult?.isrc?.slice(0, 2).toLowerCase();
+        const linkEnrichedAcoustIdResult = await attachLinksToResults([acoustIdResult], isrcCountry? isrcCountry : undefined);
         console.log(linkEnrichedAcoustIdResult)
         return linkEnrichedAcoustIdResult;
     }
@@ -90,14 +91,16 @@ export async function recognize(filePath: string): Promise<MusicResult[]> {
     console.log(shazamResultUnified);
 
     const results: RecognizeResult = [];
-    if (acoustIdResult) {
-        results.push(acoustIdResult);
-    }
     if (shazamResultUnified) {
         results.push(shazamResultUnified);
     }
+    if (acoustIdResult) {
+        results.push(acoustIdResult);
+    }
 
-    const linkEnrichedResults = await attachLinksToResults(results);
+    const isrcCountry = results[0]?.isrc?.slice(0, 2).toLowerCase();
+
+    const linkEnrichedResults = await attachLinksToResults(results, isrcCountry ? isrcCountry : undefined);
 
     console.log(linkEnrichedResults);
 

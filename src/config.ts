@@ -24,3 +24,10 @@ export interface PlatformLinks {
   appleMusic: string | null;
   youtube: string | null;
 }
+
+export type ItunesTrack = {
+  trackName?: string;
+  artistName?: string;
+  trackViewUrl?: string;
+  collectionName?: string;
+};
