@@ -16,7 +16,7 @@ Instead of relying on a single provider, this project combines multiple recognit
 >
 > YouTube blocks datacenter IP ranges, including Render's. Without a proxy, `/urlRecognize` fails with `HTTP 429` / `HTTP 403 Forbidden` and `Failed to extract any player response`, no matter how fresh the cookies are. Cookies, PO tokens, newer `yt-dlp` builds, other player clients and a different Render region do **not** fix it. See [issue #1](https://github.com/Henrycoding-design/Music-Detector-Backend/issues/1) for the full investigation.
 >
-> **Fix:** set the `PROXY_URL` environment variable to an HTTP proxy. All `yt-dlp` traffic is routed through it.
+> **Fix:** set `PROXY_URL` to an HTTP proxy **and** `USE_PROXY=true`. `PROXY_URL` alone is ignored. All `yt-dlp` traffic is then routed through the proxy.
 >
 > - ✅ **Local:** works without a proxy (residential IPs are generally trusted).
 > - ✅ **Cloud + proxy:** works. Verified on Render with a free-tier datacenter proxy (Webshare). Residential proxies are more reliable long term.
@@ -45,6 +45,7 @@ Instead of relying on a single provider, this project combines multiple recognit
 * 📚 Metadata enrichment using **MusicBrainz**
 * 🎧 Automatic fallback to **Shazam RapidAPI** when open databases cannot confidently identify a track
 * 🎙️ Dedicated noise-reduction and normalization pipeline for recorded/microphone audio (using **ARNNDN** recurrent neural network model & FFmpeg filters)
+* 🔗 Platform links (Spotify, Apple Music, YouTube) attached to every result
 * 📦 Unified response format regardless of the recognition source
 * 🚀 REST API built with Express
 * 🔒 Fully typed with TypeScript
@@ -61,7 +62,7 @@ The backend includes several production-oriented reliability mechanisms:
 - 💾 Binary auto-management across Windows and Linux
 - 📈 Memory usage logging for long-running deployments
 - ⚠️ Graceful API fallback when providers are temporarily unavailable
-- 🌐 Optional proxy support for `yt-dlp` (`PROXY_URL`) to work around cloud IP blocking
+- 🌐 Optional proxy support for `yt-dlp` (`PROXY_URL` and `USE_PROXY`) to work around cloud IP blocking
 - ⏱️ Duration guard: videos longer than 8 minutes and live streams are rejected before download
 
 ### 💓 Heartbeat & Cookie Validation Flow
@@ -142,6 +143,15 @@ If AcoustID confidence is low or no match:
           Shazam API
                │
                ▼
+          Final result(s)
+               │
+               ▼
+          Platform Links enrichment (platformLinks.ts)
+          ├── Apple Music: iTunes Search API (storefront from ISRC country code, scored match)
+          ├── YouTube: Data API v3 (needs YOUTUBE_API_KEY)
+          └── Spotify: search URL built from title + artist
+               │
+               ▼
           Return Result (Shazam API (if any) + MusicBrainz (if any))
 ```
 
@@ -191,6 +201,8 @@ The backend is designed to support multiple candidate results when confidence is
 * AcoustID
 * MusicBrainz
 * Shazam API (fallback)
+* iTunes Search API
+* Youtube API v3
 
 ### Normalization & Denoising Services
 
@@ -251,6 +263,7 @@ src/
 │   ├── memoryLogger.ts
 │   ├── musicbrainz.ts
 │   ├── normalizer.ts
+│   ├── platformLinks.ts
 │   ├── recognition.ts
 │   └── shazam.ts
 │
@@ -287,11 +300,16 @@ RAPIDAPI_HOST=shazam.p.rapidapi.com
 HEARTBEAT_SECRET=your_heartbeat_secret
 # Optional. Required on cloud hosts such as Render. Keep it in env vars/secrets.
 PROXY_URL=http://username:password@host:port
+# Optional. Set to true to route yt-dlp through PROXY_URL (default: false)
+USE_PROXY=true
+# Optional. Enables YouTube links in results. Without it, links.youtube is null
+YOUTUBE_API_KEY=your_youtube_data_api_key
 ```
 
 > [!NOTE]
 > You can provide either `RAPIDAPI_KEYS` (comma-separated for horizontal scale and failover rotation) or a traditional singular `RAPIDAPI_KEY`. The system prioritizes multi-keys first and fallbacks to the singular variant.
 > `HEARTBEAT_SECRET` is used to make sure the request is coming from an authorized client, preventing random requests from accidentally triggering your `yt-dlp` download and cookie refreshing loop. Skip if you do not use the `/api/keep-alive` endpoint.
+> Filling `PROXY_URL` but left `USE_PROXY` undefined will NOT trigger the proxy routing pipeline. Make sure you correctly configured both.
 
 ### 4. Binary Executables
 
@@ -413,23 +431,65 @@ curl -X POST http://localhost:3000/urlRecognize \
   "success": true,
   "result": [
     {
-      "confidence": 0.97204643,
+      "confidence": 0.97910076,
       "recording": {
-        "id": "1e141b98-eed4-4312-9f72-4efc61ed24df",
-        "title": "Love Story",
-        "artist": "Taylor Swift",
-        "duration": 234
+        "id": "7d45d272-2bf9-4c06-bf0c-4e42583b96f2",
+        "title": "Faded",
+        "artist": "Alan Walker",
+        "duration": 212
       },
-      "album": "Fearless",
-      "releaseDate": "2008-11-11",
-      "isrc": "USCJY0803276",
-      "genres": [],
+      "album": "Faded",
+      "releaseDate": "2015-12-03",
+      "isrc": "NOG841549010",
+      "genres": [ "downtempo", "electro house", "electropop", "pop" ],
       "cover": null,
-      "shazamUrl": null
+      "shazamUrl": null,
+      "links": {
+        "spotify": "https://open.spotify.com/search/Faded%20Alan%20Walker",
+        "appleMusic": "https://music.apple.com/no/album/faded/1196294554?i=1196294581&uo=4",
+        "youtube": "https://www.youtube.com/watch?v=60ItHLz5WEA"
+      }
     }
   ]
 }
 ```
+---
+
+## 🔗 Platform Links
+
+Every result returned by `/recognize`, `/recordingRecognize` and `/urlRecognize` is enriched with a `links` object pointing to the song on Spotify, Apple Music and YouTube. The links are resolved from the final recognized title and artist by `src/services/platformLinks.ts`, after the AcoustID or Shazam step.
+
+```json
+"links": {
+  "spotify": "https://open.spotify.com/search/Love%20Story%20Taylor%20Swift",
+  "appleMusic": "https://music.apple.com/us/album/love-story/...",
+  "youtube": "https://www.youtube.com/watch?v=..."
+}
+```
+
+Each field is a `string` or `null`. Always handle `null` on the client.
+
+| Field | How it is resolved | When it is `null` |
+|---|---|---|
+| `spotify` | Search URL built from title + artist | Only when the title or artist is missing |
+| `appleMusic` | iTunes Search API, best-scoring candidate | No confident match (see below), or the API call failed |
+| `youtube` | YouTube Data API v3 search for `<title> <artist> official`, first result | `YOUTUBE_API_KEY` is not set, quota is exhausted, or the API call failed |
+
+### Behavior to be aware of
+
+- **Spotify is a search URL, not a direct track link.** It opens Spotify's search page for the song. The backend does not call the Spotify API, so no Spotify credentials are needed.
+- **Apple Music can be `null` when no confident match is found.** iTunes returns up to 10 candidates. Titles and artists are normalized first (feat. credits, "Remastered", "Live", "Deluxe" and similar tags are stripped) and then scored:
+  - exact title match: +3, partial match: +1
+  - exact artist match: +3, partial match: +1
+  - candidates whose track, album or artist name contains `karaoke`, `tribute`, `cover` or `instrumental`: −4
+
+  A link is returned only if the best candidate scores **4 or higher**, so a title match alone is never enough. A wrong link is considered worse than no link.
+- **YouTube is `null` without `YOUTUBE_API_KEY`.** Set it in your environment to enable YouTube links. The result is simply the first search hit, so it is not guaranteed to be the official upload. Each lookup is a `search.list` call, which costs 100 quota units, so the default daily quota of 10,000 units allows roughly 100 lookups per day (one per guess, so a response with two guesses uses two).
+- **Results with no title or artist get all links set to `null`.** Nothing is searched in that case, including Spotify.
+- **The Apple Music storefront country comes from the ISRC.** The first two letters of the ISRC of the first result are used as the iTunes country code (for example `USCJY0803276` → `us`). If there is no ISRC, the default is `us`. The same storefront is used for every result in the response. Note that an ISRC prefix identifies where the recording was registered, which is not always the storefront where the song is sold, so a mismatch can occasionally produce `null`.
+
+> [!NOTE]
+> Link resolution never fails the request. If iTunes or YouTube errors out, the corresponding field is `null` and the rest of the result is returned normally. Because lookups run after recognition, they add a small amount of latency to every response.
 
 ---
 
@@ -482,6 +542,7 @@ Failed to extract any player response
 * [x] Dedicated normalization and detection pipeline for recorded audio
 * [x] Proxy support for `yt-dlp` to work around cloud IP blocking
 * [x] Duration and live-stream guard for URL recognition
+* [x] Spotify / Apple Music / YouTube link retrieval
 
 ---
 
