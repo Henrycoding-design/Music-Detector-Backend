@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import { fileTypeFromFile } from "file-type";
 import { normalizeRecording } from "../services/normalizer.js";
 import { logMemorySnapshot } from "../services/memoryLogger.js";
 import { recognize } from "../services/recognition.js";
@@ -30,9 +31,12 @@ const upload = multer({
         ];
 
         const ext = path.extname(file.originalname).toLowerCase();
+        const isValidMime =
+            file.mimetype.startsWith("audio/") ||
+            file.mimetype === "application/octet-stream";
 
         if (
-            file.mimetype.startsWith("audio/") ||
+            isValidMime &&
             allowedExtensions.includes(ext)
         ) {
             return cb(null, true);
@@ -54,7 +58,25 @@ router.post("/", upload.single("file"), async (req, res) => {
     let normalized = "";
 
     try {
+        // detect actual file bytes
+        const detectedType = await fileTypeFromFile(req.file.path);
+        const allowedMimes = [
+            "audio/mpeg",
+            "audio/wav",
+            "audio/vnd.wave",
+            "audio/flac",
+            "audio/x-flac",
+            "audio/mp4",
+            "audio/x-m4a",
+            "audio/aac",
+            "audio/ogg",
+        ];
 
+        if (!detectedType || !allowedMimes.includes(detectedType.mime)) {
+            throw new Error("Invalid file content. Only real audio files are allowed.");
+        }
+
+        // start recognition pipeline
         normalized = await normalizeRecording(req.file.path);
 
         const result = await recognize(normalized);
@@ -66,14 +88,17 @@ router.post("/", upload.single("file"), async (req, res) => {
 
     } catch (error) {
 
-        if (error instanceof multer.MulterError) {
-            return res.status(400).json({
-                success: false,
-                error: error.message,
-            });
-        }
+        // if (error instanceof multer.MulterError) { this multer catch wont run, the error is catched in the err-handler middleware in index.ts instead
+        //     return res.status(400).json({
+        //         success: false,
+        //         error: error.message,
+        //     });
+        // }
 
-        if (error instanceof Error) {
+        if (
+            error instanceof Error &&
+            error.message === "Invalid file content. Only real audio files are allowed."
+        ) {
             return res.status(400).json({
                 success: false,
                 error: error.message,
