@@ -23,11 +23,13 @@ const upload = multer({
     fileFilter(req, file, cb) {
         const allowedExtensions = [
             ".mp3",
+            ".mp4",
             ".wav",
             ".flac",
             ".m4a",
             ".aac",
             ".ogg",
+            ".webm",
         ];
 
         const ext = path.extname(file.originalname).toLowerCase();
@@ -67,10 +69,15 @@ router.post("/", upload.single("file"), async (req, res) => {
             "audio/flac",
             "audio/x-flac",
             "audio/mp4",
+            "video/mp4",
             "audio/x-m4a",
             "audio/aac",
             "audio/ogg",
+            "audio/webm",
+            "video/webm",
         ];
+
+        console.log(`[Recording Recognition] Detected file-type: ${JSON.stringify(detectedType)}`);
 
         if (!detectedType || !allowedMimes.includes(detectedType.mime)) {
             throw new Error("Invalid file content. Only real audio files are allowed.");

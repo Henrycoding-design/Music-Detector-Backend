@@ -71,6 +71,8 @@ router.post("/", upload.single("file"), async (req, res) => {
             "audio/ogg",
         ];
 
+        console.log(`[Audio File Recognition] Detected file-type: ${JSON.stringify(detectedType)}`);
+
         if (!detectedType || !allowedMimes.includes(detectedType.mime)) {
             throw new Error("Invalid file content. Only real audio files are allowed.");
         }
