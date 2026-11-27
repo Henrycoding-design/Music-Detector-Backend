@@ -66,18 +66,18 @@ export async function downloadAudio(url: string): Promise<string> {
         const hasLiveCookies = await fileExists(activeCookiesPath);
         const hasMasterCookies = await fileExists(masterCookiesPath);
 
-        // if (hasLiveCookies) {
-        //     args.unshift("--cookies", activeCookiesPath);
-        //     console.log(`[downloader] Reusing living session cookies at: ${activeCookiesPath}`);
-        // } else if (hasMasterCookies) {
-        //     try {
-        //         await fs.copyFile(masterCookiesPath, activeCookiesPath);
-        //         args.unshift("--cookies", activeCookiesPath);
-        //         console.log(`[downloader] Initialized living session file copy from master secrets.`);
-        //     } catch (copyErr) {
-        //         console.warn("[downloader] Failed to copy master cookie file, running without cookies:", copyErr);
-        //     }
-        // }
+        if (hasLiveCookies) {
+            args.unshift("--cookies", activeCookiesPath);
+            console.log(`[downloader] Reusing living session cookies at: ${activeCookiesPath}`);
+        } else if (hasMasterCookies) {
+            try {
+                await fs.copyFile(masterCookiesPath, activeCookiesPath);
+                args.unshift("--cookies", activeCookiesPath);
+                console.log(`[downloader] Initialized living session file copy from master secrets.`);
+            } catch (copyErr) {
+                console.warn("[downloader] Failed to copy master cookie file, running without cookies:", copyErr);
+            }
+        }
 
         args.push(url);
         return args;
